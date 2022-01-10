@@ -6,6 +6,28 @@ const multer = require("multer")
 
 const upload = multer({ dest: 'public' })
 
+const { verifyUser } = require("../middlewares/auth")
+
+app.get('/:id', verifyUser, (req, res) => {
+  const { id } = req.params
+
+  fs.readFile('./users.json', (err, data) => {
+    if (err) {
+      res.status(500).json({ json: 'An error occured' })
+      return
+    }
+
+    const users = JSON.parse(data)
+    const user = users.find(user => user.id === Number(id))
+
+    if (user) {
+      res.json(user)
+    } else {
+      res.status(404).json({ error: 'User not found' })
+    }
+  })
+})
+
 app.post('/:id', upload.single('profilePicture'), (req, res) => {
   console.log(req.file)
   const { id } = req.params

@@ -1,6 +1,7 @@
 const passport = require("passport")
 const passportLocal = require("passport-local")
 const fs = require("fs")
+const res = require("express/lib/response")
 
 const LocalStrategy = passportLocal.Strategy
 

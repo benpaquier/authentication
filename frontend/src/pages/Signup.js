@@ -32,56 +32,7 @@ const Signup = () => {
       age: "2"
     },
     onSubmit: values => {
-      // on va créer notre utilisateur dans le backend    
-      fetch('http://localhost:5000/auth/signup', {
-        method: 'post',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          age: values.age,
-          email: values.email,
-          password: values.password,
-          username: values.username
-        })
-      })
-        .then(response => response.json())
-        .then(user => {
-          if (user.error) {
-            alert(user.error)
-          } else {
-            const formdata = new FormData()
-            formdata.append('profilePicture', values.file, values.file.name)
-
-            fetch(`http://localhost:5000/users/${user.id}`, {
-              method: 'post',
-              credentials: 'include',
-              body: formdata
-            })
-              .then(response => response.json())
-              .then(data => {
-                // // si tout va bien, on récupère les infos de l'utilisateur
-                // qu'on vient de créer. On va donc pouvoir utiliser son username
-                // et son password pour se connecter
-                fetch('http://localhost:5000/auth/login', {
-                  method: 'post',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    username: user.username,
-                    password: user.password
-                  })
-                })
-                  .then(response => response.json())
-                  .then(data => {
-                    navigate('/admin')
-                  })
-              })
-          }
-        })
+      signup(values)
     },
     validateOnChange: false,
     validationSchema: Yup.object({
@@ -99,6 +50,66 @@ const Signup = () => {
         .required("Age is required")
     })
   })
+
+  const signup = async values => {
+    // fetch signup
+    const signupResponse = await fetch('http://localhost:5000/auth/signup', {
+      method: 'post',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        age: values.age,
+        email: values.email,
+        password: values.password,
+        username: values.username
+      })
+    })
+
+    const user = await signupResponse.json()
+
+    if (user.error) {
+      alert(user.error)
+      return
+    }
+
+    // fetch upload
+    const formdata = new FormData()
+    formdata.append('profilePicture', values.file, values.file.name)
+
+    const uploadResponse = await fetch(`http://localhost:5000/users/${user.id}`, {
+      method: 'post',
+      credentials: 'include',
+      body: formdata
+    })
+
+    const uploadData = await uploadResponse.json()
+
+    if (uploadData.error) {
+      alert(uploadData.error)
+      return
+    }
+
+    // fetch login
+    const loginResponse = await fetch('http://localhost:5000/auth/login', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: user.username,
+        password: user.password
+      })
+    })
+
+    if (loginResponse.status >= 400) {
+      alert(loginResponse.statusText)
+    } else {
+      navigate('/admin')
+    }
+  }
 
   const togglePasswordVisible = () => {
     setPasswordVisible(!passwordVisible)
